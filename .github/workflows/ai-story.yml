@@ -15,7 +15,7 @@ jobs:
       - name: Generate story with Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python check_models.py
+        run: python generate_story.py
 
       - name: Save AI story
         uses: actions/upload-artifact@v4
