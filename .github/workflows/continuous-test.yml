@@ -1,0 +1,57 @@
+name: StarryDreamsLand Continuous 8s Test (PAID)
+
+on:
+  workflow_dispatch:
+    inputs:
+      original_run_id:
+        description: 'Successful original animated-short run ID containing scene images'
+        required: true
+        default: '38246115692'
+        type: string
+      confirm_paid_generation:
+        description: 'Type YES to authorize TWO paid Veo video generations'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  continuous-test:
+    if: ${{ inputs.confirm_paid_generation == 'YES' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install video tools and Google GenAI SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade google-genai
+      - name: Reuse the original first-scene image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.original_run_id }}
+        run: |
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name starrydreamsland-animated-short --dir original_artifact
+          mkdir -p scenes
+          if [ -f original_artifact/scenes/scene_01.png ]; then
+            cp original_artifact/scenes/scene_01.png scenes/scene_01.png
+          elif [ -f original_artifact/scenes/scene_01.jpg ]; then
+            cp original_artifact/scenes/scene_01.jpg scenes/scene_01.jpg
+          else
+            echo 'First scene image missing from original artifact'; exit 1
+          fi
+      - name: Generate two connected Veo clips (PAID)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python continuous_test.py
+      - name: Upload connected test video and source clips
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starrydreamsland-continuous-8s-test
+          path: continuous_test_output/
+          if-no-files-found: warn
+          retention-days: 7
