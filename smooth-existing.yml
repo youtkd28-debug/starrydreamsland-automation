@@ -1,0 +1,40 @@
+name: Smooth Existing Animation (FREE)
+
+on:
+  workflow_dispatch:
+    inputs:
+      original_run_id:
+        description: 'Run ID of successful StarryDreamsLand Animated Short run'
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  smooth-video:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install video tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak-ng
+      - name: Download original clips from previous run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.original_run_id }}
+        run: |
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name starrydreamsland-animated-short --dir .
+          test -f story.json
+          test -f animated_scenes/clip_06.mp4
+      - name: Build smooth transitions without AI costs
+        run: python smooth_existing.py
+      - name: Download finished video
+        uses: actions/upload-artifact@v4
+        with:
+          name: starrydreamsland-smooth-video
+          path: starrydreamsland-smooth.mp4
+          retention-days: 7
