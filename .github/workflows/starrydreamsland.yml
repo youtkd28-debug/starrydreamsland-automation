@@ -1,14 +1,31 @@
 
-name: StarryDreamsLand Test
+name: StarryDreamsLand Video Test
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  create-video:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check automation
+      - name: Install FFmpeg
         run: |
-          echo "StarryDreamsLand automation is working!"
-          python3 --version
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Generate 30-second Short
+        run: |
+          ffmpeg -y \
+            -f lavfi -i "color=c=0x191447:s=720x1280:r=24:d=30" \
+            -vf "drawbox=x=0:y=0:w=iw:h=ih:color=0x342276@0.35:t=fill,drawtext=text='StarryDreamsLand':fontcolor=yellow:fontsize=50:x=(w-text_w)/2:y=250+25*sin(t*2),drawtext=text='Welcome to our magical world!':fontcolor=white:fontsize=29:x=(w-text_w)/2:y=650+20*sin(t),drawtext=text='New adventures await!':fontcolor=0xFFB5F5:fontsize=34:x=(w-text_w)/2:y=850+15*sin(t*1.5)" \
+            -c:v libx264 -pix_fmt yuv420p \
+            -t 30 -movflags +faststart \
+            starrydreamsland-test.mp4
+
+      - name: Save video
+        uses: actions/upload-artifact@v4
+        with:
+          name: starrydreamsland-test-video
+          path: starrydreamsland-test.mp4
+          retention-days: 7
