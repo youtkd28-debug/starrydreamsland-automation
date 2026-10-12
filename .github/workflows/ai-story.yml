@@ -1,0 +1,25 @@
+
+name: StarryDreamsLand AI Story Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-story:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate story with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_story.py
+
+      - name: Save AI story
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-generated-story
+          path: story.json
+          retention-days: 7
