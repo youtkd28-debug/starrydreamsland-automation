@@ -1,0 +1,61 @@
+name: StarryDreamsLand Continuous 30s (PAID)
+
+on:
+  workflow_dispatch:
+    inputs:
+      original_run_id:
+        description: 'Original animated-short run ID containing the first scene image'
+        required: true
+        default: '38246115692'
+        type: string
+      confirm_paid_generation:
+        description: 'Type YES to authorize EIGHT paid Veo video generations'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: starrydreamsland-continuous-30s
+  cancel-in-progress: false
+
+jobs:
+  continuous-30s:
+    if: ${{ inputs.confirm_paid_generation == 'YES' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg and Google GenAI SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade google-genai
+      - name: Reuse original first-scene image (no image-generation charge)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.original_run_id }}
+        run: |
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name starrydreamsland-animated-short --dir original_artifact
+          mkdir -p scenes
+          if [ -f original_artifact/scenes/scene_01.png ]; then
+            cp original_artifact/scenes/scene_01.png scenes/scene_01.png
+          elif [ -f original_artifact/scenes/scene_01.jpg ]; then
+            cp original_artifact/scenes/scene_01.jpg scenes/scene_01.jpg
+          else
+            echo 'First scene image missing from original artifact'; exit 1
+          fi
+      - name: Generate eight sequential connected Veo clips (PAID)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python continuous_30s.py
+      - name: Upload finished video and source clips
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starrydreamsland-continuous-30s
+          path: continuous_30s_output/
+          if-no-files-found: warn
+          retention-days: 7
