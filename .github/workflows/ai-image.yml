@@ -1,0 +1,30 @@
+
+name: StarryDreamsLand AI Image Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate fresh story
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_story.py
+
+      - name: Generate first AI image
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_images.py
+
+      - name: Save AI image
+        uses: actions/upload-artifact@v4
+        with:
+          name: first-ai-image
+          path: scene_01.png
+          retention-days: 7
