@@ -1,0 +1,44 @@
+
+name: StarryDreamsLand Full Video
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-full-video:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install video and voice tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak-ng
+
+      - name: Generate AI story
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_story.py
+
+      - name: Generate six AI images
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_images.py
+
+      - name: Create final video
+        run: python make_video.py
+
+      - name: Save video and scenes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starrydreamsland-complete-video
+          path: |
+            starrydreamsland-final.mp4
+            story.json
+            scenes/
+          if-no-files-found: warn
+          retention-days: 7
