@@ -1,0 +1,53 @@
+name: StarryDreamsLand Animated Short (6 Veo Clips)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid_generation:
+        description: 'Type YES to authorize 6 paid Veo generations (estimated $1.20 + image generation costs)'
+        required: true
+        type: string
+
+concurrency:
+  group: starrydreamsland-paid-generation
+  cancel-in-progress: false
+
+jobs:
+  make-animated-short:
+    if: ${{ inputs.confirm_paid_generation == 'YES' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install video tools and Google GenAI SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak-ng
+          python -m pip install --upgrade google-genai
+      - name: Generate story
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_story.py
+      - name: Generate six character images
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python generate_images.py
+      - name: Animate six scenes with Veo (PAID)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python animate_all_scenes.py
+      - name: Assemble final YouTube Short
+        run: python assemble_animated_short.py
+      - name: Upload results and partial clips
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starrydreamsland-animated-short
+          path: |
+            story.json
+            scenes/
+            animated_scenes/
+            starrydreamsland-animated-short.mp4
+          retention-days: 7
+          if-no-files-found: warn
