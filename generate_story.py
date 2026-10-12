@@ -46,8 +46,16 @@ request = urllib.request.Request(
     method="POST"
 )
 
-with urllib.request.urlopen(request, timeout=60) as response:
-    result = json.load(response)
+
+try:
+    with urllib.request.urlopen(request, timeout=60) as response:
+        result = json.load(response)
+
+except urllib.error.HTTPError as e:
+    print("Gemini API error:", e.code)
+    print(e.read().decode("utf-8"))
+    raise SystemExit(1)
+
 
 text = result["candidates"][0]["content"]["parts"][0]["text"]
 story = json.loads(text)
