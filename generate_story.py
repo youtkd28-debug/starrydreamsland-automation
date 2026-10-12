@@ -48,7 +48,7 @@ request = urllib.request.Request(
 
 
 try:
-    with urllib.request.urlopen(request, timeout=60) as response:
+    with urllib.request.urlopen(request, timeout=180) as response:
         result = json.load(response)
 
 except urllib.error.HTTPError as e:
